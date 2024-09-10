@@ -16,24 +16,27 @@
 module lab1_imul_IntMulBase_datapath
 (
   input logic clk,
+  input logic reset,
   input logic [63:0] req_msg,
   input logic result_en,
   input logic a_mux_sel,
   input logic b_mux_sel,
   input logic result_mux_sel,
-  input logic add_mux_sel,  
+  input logic add_mux_sel,
+    
 
-  output logic [31:0] resp_msg
+  output logic [31:0] resp_msg,
+  output logic b_lsb
 );
 
   // internal signals
 
-  logic [31:0] a_reg;
-  logic [31:0] b_reg;
-  logic [31:0] result_reg;
+  logic [31:0] a_reg_out;
+  logic [31:0] b_reg_out;
+  logic [31:0] result_reg_out;
   
-  logic [31:0] shift_left;
-  logic [31:0] shift_right;
+  logic [31:0] shifted_left;
+  logic [31:0] shifted_right;
   logic [31:0] adder_out;  
 
   logic [31:0] a_mux_out;
@@ -43,7 +46,7 @@ module lab1_imul_IntMulBase_datapath
   
   vc_Mux2#(32) a_mux // instantiate a mux
   (
-    .in0 (shift_left),
+    .in0 (shifted_left),
     .in1 (req_msg[31:0]),
     .sel (a_mux_sel),
     .out ()
@@ -51,7 +54,7 @@ module lab1_imul_IntMulBase_datapath
   
   vc_Mux2#(32) b_mux // instantiate b mux
   (
-    .in0 (shift_right),
+    .in0 (shifted_right),
     .in1 (req_msg[63:32]),
     .sel (b_mux_sel),
     .out (b_mux_out)
@@ -68,19 +71,61 @@ module lab1_imul_IntMulBase_datapath
   vc_Mux2#(32) add_mux // instantiate add mux
   (
     .in0 (adder_out),
-    .in1 (result_reg),
+    .in1 (result_reg_out),
     .sel (add_mux_sel),
     .out (add_mux_out)
   );
-
-  module vc_EnResetReg#(32, 0) result_reg // result reg, 32 bits, reset to 0
+  
+  vc_ResetReg#(32, 0) b_reg // b_reg, 32 bits, reset to 0
   (
     .in0 (clk)
     .in1 (reset)
-    .in2 (result_reg)
+    .in2 (b_reg_out)
+    .in3 (b_mux_out) 
+  );  
+  
+  vc_ResetReg#(32, 0) a_reg // a_reg, 32 bits, reset to 0
+  (
+    .in0 (clk)
+    .in1 (reset)
+    .in2 (a_reg_out)
+    .in3 (a_mux_out) 
+  );
+ 
+  vc_EnResetReg#(32, 0) result_reg // result reg, 32 bits, reset to 0
+  (
+    .in0 (clk)
+    .in1 (reset)
+    .in2 (result_reg_out)
     .in3 (result_mux_out)
     .in4 (result_en)
   );
+
+// Arithmetic modules
+  vc_RightLogicalShifter#(32,1) right_shift// 32 bits, shift by 1
+  (
+    .in0 (b_reg_out)
+    .in1 (1'b1) // shift by 1, always
+    .in2 (shifted_right)
+  );
+
+  vc_LeftLogicalShifter#(32,1) left_shift // 32 bits, shift by 1
+  (
+    .in0 (a_reg_out)
+    .in1 (1'b1) // shift by 1, always
+    .in2 (shifted_left)
+  );
+  
+  vc_SimpleAdder#(32) adder // 32 bit adder, no cin
+  (
+    .in0 (a_reg_out)
+    .in1 (result_reg_out)
+    .in2 (adder_out)
+  );
+  
+  // outputs
+  assign out b_lsb = b_reg_out[0]
+  assign out resp_msg = result_reg_out;   
 
 endmodule
 
