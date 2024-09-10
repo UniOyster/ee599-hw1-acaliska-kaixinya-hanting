@@ -7,8 +7,87 @@
 
 `include "lab1-imul-msgs.v"
 `include "vc-trace.v"
+`include "vc-muxes.v"
+`include "vc-regs.v"
+`include "vc-arithmetic.v"
 
 // Define datapath and control unit here
+
+module lab1_imul_IntMulBase_datapath
+(
+  input logic clk,
+  input logic [63:0] req_msg,
+  input logic result_en,
+  input logic a_mux_sel,
+  input logic b_mux_sel,
+  input logic result_mux_sel,
+  input logic add_mux_sel,  
+
+  output logic [31:0] resp_msg
+);
+
+  // internal signals
+
+  logic [31:0] a_reg;
+  logic [31:0] b_reg;
+  logic [31:0] result_reg;
+  
+  logic [31:0] shift_left;
+  logic [31:0] shift_right;
+  logic [31:0] adder_out;  
+
+  logic [31:0] a_mux_out;
+  logic [31:0] b_mux_out;
+  logic [31:0] result_mux_out;
+  logic [31:0] add_mux_out;
+  
+  vc_Mux2#(32) a_mux // instantiate a mux
+  (
+    .in0 (shift_left),
+    .in1 (req_msg[31:0]),
+    .sel (a_mux_sel),
+    .out ()
+  );
+  
+  vc_Mux2#(32) b_mux // instantiate b mux
+  (
+    .in0 (shift_right),
+    .in1 (req_msg[63:32]),
+    .sel (b_mux_sel),
+    .out (b_mux_out)
+  );
+  
+  vc_Mux2#(32) result_mux // instantiate result mux
+  (
+    .in0 (add_mux_out),
+    .in1 (32'b0),
+    .sel (result_mux_sel),
+    .out (result_mux_out)
+  );
+
+  vc_Mux2#(32) add_mux // instantiate add mux
+  (
+    .in0 (adder_out),
+    .in1 (result_reg),
+    .sel (add_mux_sel),
+    .out (add_mux_out)
+  );
+
+  module vc_EnResetReg#(32, 0) result_reg // result reg, 32 bits, reset to 0
+  (
+    .in0 (clk)
+    .in1 (reset)
+    .in2 (result_reg)
+    .in3 (result_mux_out)
+    .in4 (result_en)
+  );
+
+endmodule
+
+module lab1_imul_IntMulBase_controlUnit
+(
+);
+endmodule
 
 //========================================================================
 // Integer Multiplier Fixed-Latency Implementation
@@ -27,6 +106,13 @@ module lab1_imul_IntMulBase
   input  logic                resp_rdy,
   output lab1_imul_resp_msg_t resp_msg
 );
+
+  logic [31:0] a_reg;
+  logic [31:0] b_reg;
+  logic [31:0] result_reg;
+  logic [4:0] counter;
+
+    
 
   //----------------------------------------------------------------------
   // Trace request message
