@@ -78,54 +78,54 @@ module lab1_imul_IntMulBase_datapath
   
   vc_ResetReg#(32, 0) b_reg // b_reg, 32 bits, reset to 0
   (
-    .in0 (clk)
-    .in1 (reset)
-    .in2 (b_reg_out)
+    .in0 (clk),
+    .in1 (reset),
+    .in2 (b_reg_out),
     .in3 (b_mux_out) 
   );  
   
   vc_ResetReg#(32, 0) a_reg // a_reg, 32 bits, reset to 0
   (
-    .in0 (clk)
-    .in1 (reset)
-    .in2 (a_reg_out)
+    .in0 (clk),
+    .in1 (reset),
+    .in2 (a_reg_out),
     .in3 (a_mux_out) 
   );
  
   vc_EnResetReg#(32, 0) result_reg // result reg, 32 bits, reset to 0
   (
-    .in0 (clk)
-    .in1 (reset)
-    .in2 (result_reg_out)
-    .in3 (result_mux_out)
+    .in0 (clk),
+    .in1 (reset),
+    .in2 (result_reg_out),
+    .in3 (result_mux_out),
     .in4 (result_en)
   );
 
 // Arithmetic modules
   vc_RightLogicalShifter#(32,1) right_shift// 32 bits, shift by 1
   (
-    .in0 (b_reg_out)
-    .in1 (1'b1) // shift by 1, always
+    .in0 (b_reg_out),
+    .in1 (1'b1), // shift by 1, always
     .in2 (shifted_right)
   );
 
   vc_LeftLogicalShifter#(32,1) left_shift // 32 bits, shift by 1
   (
-    .in0 (a_reg_out)
-    .in1 (1'b1) // shift by 1, always
+    .in0 (a_reg_out),
+    .in1 (1'b1), // shift by 1, always
     .in2 (shifted_left)
   );
   
   vc_SimpleAdder#(32) adder // 32 bit adder, no cin
   (
-    .in0 (a_reg_out)
-    .in1 (result_reg_out)
+    .in0 (a_reg_out),
+    .in1 (result_reg_out),
     .in2 (adder_out)
   );
   
   // outputs
-  assign out b_lsb = b_reg_out[0]
-  assign out resp_msg = result_reg_out;   
+  assign b_lsb = b_reg_out[0];
+  assign resp_msg = result_reg_out;   
 
 endmodule
 
