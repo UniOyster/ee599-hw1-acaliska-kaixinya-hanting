@@ -205,7 +205,7 @@ always @(*) begin
       else
         next_state <= STATE_DONE;
   end
-    defaul: next_state = current_state;
+    default: next_state = current_state;
   
   endcase
 
