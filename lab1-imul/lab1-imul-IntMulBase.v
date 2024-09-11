@@ -186,7 +186,7 @@ assign  req_go = req_val  && req_rdy;
 assign  resp_go = resp_val && resp_rdy; 
 
 always @(*) begin
-  case ( current_state)
+  case ( current_state )
     STATE_IDLE: begin
       if (req_go)
         next_state <= STATE_CALC;
@@ -194,7 +194,7 @@ always @(*) begin
         next_state <= STATE_IDLE;
   end
     STATE_CALC: begin
-      if (counter == 5'd31)
+      if (counter_reg == 5'd31)
         next_state <= STATE_DONE;
       else
         next_state <= STATE_CALC;
