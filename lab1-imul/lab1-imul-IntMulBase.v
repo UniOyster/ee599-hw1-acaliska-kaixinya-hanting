@@ -129,9 +129,153 @@ module lab1_imul_IntMulBase_datapath
 
 endmodule
 
+//==============================================
+//  Control Unit
+//==============================================
+
+
 module lab1_imul_IntMulBase_controlUnit
 (
+  input  logic  clk,
+  input  logic  reset,
+
+  input  logic  req_val,
+  input  logic  resp_rdy,
+  output  logic  req_rdy,
+  output  logic  resq_val,
+
+  output  logic  a_mux_sel,
+  output  logic  b_mux_sel,
+  output  logic  result_mux_sel,
+  output  logic  result_en,
+  output  logic  add_mux_sel,
+  
+
+  input  logic  b_lsb;
 );
+
+// State Definition
+
+typedef enum logic[1:0]{
+  state_IDLE = 2'b00,
+  state_CALC = 2'b01,
+  state_DONE = 2'b10
+} state_t;
+
+
+state_t current_state, next_state;
+
+logic [4:0] counter_reg;
+
+//  State Reset
+
+always @(posedge clk) begin
+  if ( reset ) begin
+    current_state <= state_IDLE;
+  else
+    current_state <= next_state;
+end
+
+
+//  State Transitions
+
+logic req_go
+logic rsp_go
+
+assign  req_go = req_val  && req_rdy;
+assign  resp_go = resp_val && resp_rdy; 
+
+always @(*) begin
+  case ( current_state)
+    STATE_IDLE: begin
+      if (req_go)
+        next_state <= STATE_CALC;
+      else
+        next_state <= STATE_IDLE;
+  end
+    STATE_CALC: begin
+      if (counter == 5'd31)
+        next_state <= STATE_DONE;
+      else
+        next_state <= STATE_CALC;
+  end
+    STATE_DONE: begin
+      if (resp_go)
+        next_state <= STATE_IDLE;
+      else
+        next_state <= STATE_DONE;
+  end
+    defaul: next_state = current_state;
+  
+  endcase
+
+end
+
+//  Counter
+
+always @(posedge clk) begin
+  if (reset) begin
+    counter_reg <= 5'd0;
+  end
+
+  else begin
+    case (current_state)
+     STATE_IDLE: counter_reg <= 5'd0;
+     STATE_CALC: counter_reg <= counter_reg + 1;
+     STATE_DONE: counter_reg <= 5'd0;
+    endcase
+end
+
+
+//  Control Signals
+
+always @(*) begin
+  a_mux_sel = 0;
+  b_mux_sel = 0;
+  result_mux_sel = 0;
+  add_mux_sel = 0;
+  result_en = 0;
+  req_rdy = 0;
+  resp_val = 0;
+
+
+case (current_state)
+  STATE_IDLE: begin
+    req_rdy = 1;
+    a_mux_sel = 1;
+    b_mux_sel = 1;
+    result_mux_sel = 1;
+    result_en = 1;  //not sure
+    add_mux_sel = 1; //not sure
+    resp_val = 0;
+
+  STATE_CALC: begin
+    req_rdy = 0;
+    if (b_lsb) begin
+      add_mux_sel = 0; //do add if b[0]=1
+    else
+      add_mux_sel = 1;
+    end
+    
+    a_mux_sel = 0;
+    b_mux_sel = 0;
+    result_mux_sel = 0;
+    result_en = 1;
+    resp_val = 0;
+
+  STATE_DONE: begin
+    req_rdy = 0;
+    a_mux = 1'bx;
+    b_mux = 1'bx;
+    add_mux_sel = 1'bx;
+    result_mux_sel = 1'bx;
+    result_en = 0;
+    resp_val = 1;
+  endcase;
+end
+
+
+
 endmodule
 
 //========================================================================
